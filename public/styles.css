@@ -42,6 +42,32 @@ h1 {
   font-size: 1.5rem;
 }
 
+.header-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.link-btn {
+  flex: none;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link-btn:hover {
+  color: var(--text);
+}
+
+[hidden] {
+  display: none !important;
+}
+
 .subtitle {
   margin: 0 0 1.5rem;
   color: var(--muted);

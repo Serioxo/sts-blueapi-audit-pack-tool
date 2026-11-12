@@ -7,8 +7,28 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="card">
+    <section class="card" id="login-card">
       <h1>Audit Pack Tool</h1>
+      <p class="subtitle">Enter your Blue API credentials to continue.</p>
+      <form id="login-form" autocomplete="off">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" required />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required />
+
+        <div class="actions">
+          <button type="submit" id="login-btn">Log in</button>
+        </div>
+      </form>
+      <div id="login-status" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <main class="card" id="tool-card" hidden>
+      <div class="header-row">
+        <h1>Audit Pack Tool</h1>
+        <button type="button" id="logout-btn" class="link-btn">Log out</button>
+      </div>
       <p class="subtitle">
         Enter a proposal ID and document version to download the matching audit
         pack PDF from the Blue API.

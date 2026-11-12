@@ -24,28 +24,51 @@ const BLUE_API_AUTH = process.env.BLUE_API_AUTH || "";
 
 const app = express();
 
-function blueApiHeaders(extra = {}) {
-  const headers = { ...extra };
+// Build the credentials sent to the Blue API for a single incoming request.
+// A username/password supplied from the login screen (forwarded as custom
+// headers) takes precedence and is sent as HTTP Basic auth. Otherwise we fall
+// back to the Cookie / Authorization values configured in the environment.
+function credentialsFromRequest(req) {
+  const username = req.get("x-blue-username");
+  const password = req.get("x-blue-password");
+  if (username) {
+    const encoded = Buffer.from(`${username}:${password ?? ""}`).toString(
+      "base64",
+    );
+    return { Authorization: `Basic ${encoded}` };
+  }
+  const headers = {};
   if (BLUE_API_COOKIE) headers.Cookie = BLUE_API_COOKIE;
   if (BLUE_API_AUTH) headers.Authorization = BLUE_API_AUTH;
   return headers;
 }
 
-async function fetchSessions(proposalId) {
+function blueApiHeaders(credentials = {}, extra = {}) {
+  return { ...credentials, ...extra };
+}
+
+async function fetchSessions(proposalId, credentials = {}) {
   const url = `${BLUE_API_BASE_URL}/Sessions?proposalId=${encodeURIComponent(
     proposalId,
   )}`;
 
   const res = await fetch(url, {
-    headers: blueApiHeaders({ Accept: "application/json" }),
+    headers: blueApiHeaders(credentials, { Accept: "application/json" }),
   });
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     const err = new Error(
-      `Blue API returned ${res.status} when listing sessions.`,
+      res.status === 401 || res.status === 403
+        ? "Authentication with the Blue API failed. Check your credentials."
+        : `Blue API returned ${res.status} when listing sessions.`,
     );
-    err.statusCode = res.status === 404 ? 404 : 502;
+    err.statusCode =
+      res.status === 401 || res.status === 403
+        ? 401
+        : res.status === 404
+          ? 404
+          : 502;
     err.detail = body.slice(0, 500);
     throw err;
   }
@@ -97,7 +120,7 @@ app.get("/api/sessions", async (req, res) => {
     if (!pid) {
       return res.status(400).json({ error: "A proposal ID is required." });
     }
-    const sessions = await fetchSessions(pid);
+    const sessions = await fetchSessions(pid, credentialsFromRequest(req));
     return res.json({ proposalId: pid, sessions: summariseSessions(sessions) });
   } catch (err) {
     return res
@@ -115,7 +138,8 @@ app.get("/api/audit", async (req, res) => {
       req.query.documentVersion,
     );
 
-    const sessions = await fetchSessions(proposalId);
+    const credentials = credentialsFromRequest(req);
+    const sessions = await fetchSessions(proposalId, credentials);
 
     if (sessions.length === 0) {
       return res.status(404).json({
@@ -153,11 +177,18 @@ app.get("/api/audit", async (req, res) => {
     const auditUrl = `${BLUE_API_BASE_URL}/GetAudit/${encodedRef}?sessionRef=${encodedRef}`;
 
     const auditRes = await fetch(auditUrl, {
-      headers: blueApiHeaders({ Accept: "application/pdf" }),
+      headers: blueApiHeaders(credentials, { Accept: "application/pdf" }),
     });
 
     if (!auditRes.ok) {
       const body = await auditRes.text().catch(() => "");
+      if (auditRes.status === 401 || auditRes.status === 403) {
+        return res.status(401).json({
+          error:
+            "Authentication with the Blue API failed. Check your credentials.",
+          detail: body.slice(0, 500),
+        });
+      }
       return res.status(auditRes.status === 404 ? 404 : 502).json({
         error: `Blue API returned ${auditRes.status} when downloading the audit pack.`,
         detail: body.slice(0, 500),

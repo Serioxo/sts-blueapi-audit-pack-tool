@@ -6,6 +6,68 @@ const lookupBtn = document.getElementById("lookup-btn");
 const proposalInput = document.getElementById("proposalId");
 const versionInput = document.getElementById("documentVersion");
 
+const loginCard = document.getElementById("login-card");
+const toolCard = document.getElementById("tool-card");
+const loginForm = document.getElementById("login-form");
+const loginStatus = document.getElementById("login-status");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const logoutBtn = document.getElementById("logout-btn");
+
+const CREDS_KEY = "blueApiCreds";
+
+function getCreds() {
+  try {
+    return JSON.parse(sessionStorage.getItem(CREDS_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function authHeaders() {
+  const creds = getCreds();
+  if (!creds) return {};
+  return {
+    "X-Blue-Username": creds.username,
+    "X-Blue-Password": creds.password,
+  };
+}
+
+function showTool() {
+  loginCard.hidden = true;
+  toolCard.hidden = false;
+}
+
+function showLogin(message = "") {
+  toolCard.hidden = true;
+  loginCard.hidden = false;
+  loginStatus.textContent = message;
+  loginStatus.className = `status${message ? " error" : ""}`;
+  usernameInput.focus();
+}
+
+function logout(message = "") {
+  sessionStorage.removeItem(CREDS_KEY);
+  passwordInput.value = "";
+  showLogin(message);
+}
+
+loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+  if (!username || !password) {
+    showLogin("Username and password are required.");
+    return;
+  }
+  sessionStorage.setItem(CREDS_KEY, JSON.stringify({ username, password }));
+  loginStatus.textContent = "";
+  showTool();
+  proposalInput.focus();
+});
+
+logoutBtn.addEventListener("click", () => logout());
+
 function setStatus(message, type = "") {
   statusEl.textContent = message;
   statusEl.className = `status${type ? " " + type : ""}`;
@@ -41,7 +103,12 @@ async function lookupSessions() {
   try {
     const res = await fetch(
       `/api/sessions?proposalId=${encodeURIComponent(proposalId)}`,
+      { headers: authHeaders() },
     );
+    if (res.status === 401) {
+      logout(await parseError(res));
+      return;
+    }
     if (!res.ok) {
       setStatus(await parseError(res), "error");
       return;
@@ -108,8 +175,13 @@ async function downloadAudit(event) {
       `/api/audit?proposalId=${encodeURIComponent(
         proposalId,
       )}&documentVersion=${encodeURIComponent(documentVersion)}`,
+      { headers: authHeaders() },
     );
 
+    if (res.status === 401) {
+      logout(await parseError(res));
+      return;
+    }
     if (!res.ok) {
       setStatus(await parseError(res), "error");
       return;
@@ -141,3 +213,9 @@ async function downloadAudit(event) {
 
 form.addEventListener("submit", downloadAudit);
 lookupBtn.addEventListener("click", lookupSessions);
+
+if (getCreds()) {
+  showTool();
+} else {
+  showLogin();
+}
