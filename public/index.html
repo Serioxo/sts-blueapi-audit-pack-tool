@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Audit Pack Tool</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="card">
+      <h1>Audit Pack Tool</h1>
+      <p class="subtitle">
+        Enter a proposal ID and document version to download the matching audit
+        pack PDF from the Blue API.
+      </p>
+
+      <form id="audit-form" autocomplete="off">
+        <label for="proposalId">Proposal ID</label>
+        <input
+          id="proposalId"
+          name="proposalId"
+          type="text"
+          inputmode="numeric"
+          placeholder="e.g. 123456"
+          required
+        />
+
+        <label for="documentVersion">Document version</label>
+        <input
+          id="documentVersion"
+          name="documentVersion"
+          type="text"
+          inputmode="numeric"
+          placeholder="e.g. 1"
+          required
+        />
+
+        <div class="actions">
+          <button type="button" id="lookup-btn" class="secondary">
+            Look up versions
+          </button>
+          <button type="submit" id="download-btn">Download audit pack</button>
+        </div>
+      </form>
+
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <div id="sessions" class="sessions"></div>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
