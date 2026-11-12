@@ -10,27 +10,19 @@ const loginCard = document.getElementById("login-card");
 const toolCard = document.getElementById("tool-card");
 const loginForm = document.getElementById("login-form");
 const loginStatus = document.getElementById("login-status");
-const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 const logoutBtn = document.getElementById("logout-btn");
 
-const CREDS_KEY = "blueApiCreds";
+const CREDS_KEY = "blueApiPassword";
 
-function getCreds() {
-  try {
-    return JSON.parse(sessionStorage.getItem(CREDS_KEY) || "null");
-  } catch {
-    return null;
-  }
+function getPassword() {
+  return sessionStorage.getItem(CREDS_KEY) || "";
 }
 
 function authHeaders() {
-  const creds = getCreds();
-  if (!creds) return {};
-  return {
-    "X-Blue-Username": creds.username,
-    "X-Blue-Password": creds.password,
-  };
+  const password = getPassword();
+  if (!password) return {};
+  return { "X-Blue-Password": password };
 }
 
 function showTool() {
@@ -43,7 +35,7 @@ function showLogin(message = "") {
   loginCard.hidden = false;
   loginStatus.textContent = message;
   loginStatus.className = `status${message ? " error" : ""}`;
-  usernameInput.focus();
+  passwordInput.focus();
 }
 
 function logout(message = "") {
@@ -54,13 +46,12 @@ function logout(message = "") {
 
 loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const username = usernameInput.value.trim();
   const password = passwordInput.value;
-  if (!username || !password) {
-    showLogin("Username and password are required.");
+  if (!password) {
+    showLogin("Password is required.");
     return;
   }
-  sessionStorage.setItem(CREDS_KEY, JSON.stringify({ username, password }));
+  sessionStorage.setItem(CREDS_KEY, password);
   loginStatus.textContent = "";
   showTool();
   proposalInput.focus();
@@ -214,7 +205,7 @@ async function downloadAudit(event) {
 form.addEventListener("submit", downloadAudit);
 lookupBtn.addEventListener("click", lookupSessions);
 
-if (getCreds()) {
+if (getPassword()) {
   showTool();
 } else {
   showLogin();

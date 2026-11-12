@@ -25,16 +25,14 @@ const BLUE_API_AUTH = process.env.BLUE_API_AUTH || "";
 const app = express();
 
 // Build the credentials sent to the Blue API for a single incoming request.
-// A username/password supplied from the login screen (forwarded as custom
-// headers) takes precedence and is sent as HTTP Basic auth. Otherwise we fall
-// back to the Cookie / Authorization values configured in the environment.
+// The Blue API uses HTTP Basic auth with only a password (empty username).
+// A password supplied from the login screen (forwarded as a custom header)
+// takes precedence. Otherwise we fall back to the Cookie / Authorization
+// values configured in the environment.
 function credentialsFromRequest(req) {
-  const username = req.get("x-blue-username");
   const password = req.get("x-blue-password");
-  if (username) {
-    const encoded = Buffer.from(`${username}:${password ?? ""}`).toString(
-      "base64",
-    );
+  if (password) {
+    const encoded = Buffer.from(`:${password}`).toString("base64");
     return { Authorization: `Basic ${encoded}` };
   }
   const headers = {};

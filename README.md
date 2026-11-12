@@ -31,15 +31,12 @@ Then open http://localhost:3000.
 
 ## Credentials
 
-On first load the tool shows a login screen. Enter your Blue API **username**
-and **password** once; they are kept in the browser tab's `sessionStorage`
-(cleared when the tab closes or via **Log out**) and sent with each request.
-The backend forwards them to the Blue API as HTTP Basic auth. If the Blue API
-rejects them (401/403) you are returned to the login screen with an error.
-
-> The Blue API's exact auth scheme is not confirmed here. The login forwards
-> credentials as HTTP Basic auth by default. If the API expects a different
-> scheme (session cookie / bearer token), use the environment fallback below.
+On first load the tool shows a login screen. Enter your Blue API **password**
+once; it is kept in the browser tab's `sessionStorage` (cleared when the tab
+closes or via **Log out**) and sent with each request. The Blue API uses HTTP
+Basic auth with a password only (empty username), so the backend forwards it as
+`Authorization: Basic base64(":" + password)`. If the Blue API rejects it
+(401/403) you are returned to the login screen with an error.
 
 ## Configuration
 
@@ -52,9 +49,9 @@ Set via environment variables (or a local `.env` file):
 | `BLUE_API_COOKIE`   | _(empty)_                                | Fallback `Cookie` header when no login is supplied.  |
 | `BLUE_API_AUTH`     | _(empty)_                                | Fallback `Authorization` header when no login given. |
 
-No credentials are hardcoded. Credentials entered on the login screen take
+No credentials are hardcoded. The password entered on the login screen takes
 precedence; the `BLUE_API_COOKIE` / `BLUE_API_AUTH` values are used only as a
-fallback when a request carries no login credentials.
+fallback when a request carries no login password.
 
 ## Behaviour / edge cases
 
