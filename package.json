@@ -1,0 +1,16 @@
+{
+  "name": "sts-blueapi-audit-pack-tool",
+  "version": "1.0.0",
+  "description": "Web tool to pull the correct audit pack PDF from the Blue API using a proposal ID and document version.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
